@@ -39,7 +39,7 @@ int main()
     long long key1 = rand();
     long long key2 = rand();
     //long long key = key1*key2;
-    long long key = 14;
+    long long key = 11;
     for (int i = 0; i < record_length; i++)
     {
         if (i <= rec_rand)
