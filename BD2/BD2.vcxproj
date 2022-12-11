@@ -128,10 +128,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BD2.cpp" />
+    <ClCompile Include="b_tree_manager.cpp" />
     <ClCompile Include="main_file_manager.cpp" />
+    <ClCompile Include="page.cpp" />
+    <ClCompile Include="record.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="b_tree_manager.h" />
     <ClInclude Include="main_file_manager.h" />
+    <ClInclude Include="page.h" />
+    <ClInclude Include="record.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
