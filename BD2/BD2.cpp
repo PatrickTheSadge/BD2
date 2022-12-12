@@ -39,7 +39,9 @@ int main()
     long long key1 = rand();
     long long key2 = rand();
     //long long key = key1*key2;
-    long long key = 1;
+
+    long long key = rand() % 1000;
+    printf("%lld\n", key);
     for (int i = 0; i < record_length; i++)
     {
         if (i <= rec_rand)
@@ -52,7 +54,9 @@ int main()
         }
     }
     record r = record(key, fields, record_length);
-    btm->insert(&r);
+    //btm->insert(&r);
+    //btm->print_tree(true);
+
     btm->print_tree(true);
 	/*int parent = -1;
 	unsigned int d = thisd;

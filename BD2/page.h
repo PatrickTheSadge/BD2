@@ -24,5 +24,5 @@ public:
 	void simple_insert(long long key, int addr, int addr_off, int left_addr, int right_addr);
 	int left_brother(int addr);
 	int right_brother(int addr);
-	int give_median(int* m_key, int* m_addr, int* m_addr_off);
+	int give_median(long long* m_key, int* m_addr, int* m_addr_off);
 };

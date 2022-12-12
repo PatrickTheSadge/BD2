@@ -145,7 +145,7 @@ int page::right_brother(int addr)
 	return right;
 }
 
-int page::give_median(int* m_key, int* m_addr, int* m_addr_off)
+int page::give_median(long long* m_key, int* m_addr, int* m_addr_off)
 {
 	int index = m / 2;
 	*m_key = key_s[index];

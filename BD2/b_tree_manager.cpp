@@ -255,86 +255,115 @@ bool b_tree_manager::insert(record* r)
 
 void b_tree_manager::insert_into(int cached_ind, long long r_key, int r_addr, int r_addr_off, int left_addr, int right_addr)
 {
-	page* pg = buff_pages[cached_ind];
-
-	if (pg->m < 2 * d)
-		pg->simple_insert(r_key, r_addr, r_addr_off, left_addr, right_addr);
-	else
+	if (cached_ind >= 0)
 	{
-		if (cached_ind > 0)
-		{
-			if (!compensate(cached_ind))
-				split(cached_ind, r_key, r_addr, r_addr_off, left_addr, right_addr);
-		}
+		page* pg = buff_pages[cached_ind];
+		if (pg->m < 2 * d)
+			pg->simple_insert(r_key, r_addr, r_addr_off, left_addr, right_addr);
 		else
 		{
-			int old_root_new_addr;
+			if (cached_ind > 0)
+			{
+				if (!compensate(cached_ind))
+					split(cached_ind, r_key, r_addr, r_addr_off, left_addr, right_addr);
+			}
+			else
+			{
+				int old_root_new_addr;
 
 
-			// this is root and has no more space
-			
-			// save old root -> have new address of old root
-			page* old_root = buff_pages[0];
-			write_page(old_root, file_num_of_pages, &old_root_new_addr);
+				// this is root and has no more space
 
-			// update all childs of old root -> change their parent address to new address of old root
-			for(int i = 0; i < old_root->m; i++)
+				// save old root -> have new address of old root
+				page* old_root = buff_pages[0];
+				write_page(old_root, file_num_of_pages, &old_root_new_addr);
+
+				// update all childs of old root -> change their parent address to new address of old root
+				for (int i = 0; i < old_root->m; i++)
+				{
+					if (old_root->ptr_s[i] >= 0)
+					{
+						read_page(9, old_root->ptr_s[i]);
+						buff_pages[9]->parent = old_root_new_addr;
+					}
+				}
+				if (old_root->ptr0 >= 0)
+				{
+					read_page(9, old_root->ptr0);
+					buff_pages[9]->parent = old_root_new_addr;
+				}
+
+				// update old root -> change it's parent to 0
+				old_root->parent = 0;
+
+				// make new root
+				int parent = -2;
+				unsigned int d = this->d;
+				unsigned int m = 0;
+				int ptr0 = -1;
+				int* ptr_s = new int[2 * this->d];
+				int* addr_s = new int[2 * this->d];
+				int* addr_s_off = new int[2 * this->d];
+				long long* key_s = new long long[2 * this->d];
+
+				for (int i = 0; i < 2 * this->d; i++)
+				{
+					ptr_s[i] = -1;
+					addr_s[i] = -1;
+					addr_s_off[i] = -1;
+					key_s[i] = -1;
+				}
+
+				page* root = new page(this->d, parent, m, ptr0, ptr_s, addr_s, addr_s_off, key_s);
+
+				// save new root -> at 0
+				write_page(root, 0);
+
+				// refresh buffered pages?
+				root_changed = true;
+				read_page(1, old_root_new_addr);
+				buffed_pages_addrs[0] = -1;
+				read_page(0, 0);
+
+				if (!compensate(1))
+					split(1, r_key, r_addr, r_addr_off, left_addr, right_addr);
+			}
+		}
+	}
+	else
+	{
+		int old_root_new_addr;
+
+
+		// this is root and has no more space
+
+		// save old root -> have new address of old root
+		page* old_root = buff_pages[0];
+		write_page(old_root, file_num_of_pages, &old_root_new_addr);
+
+		// update all childs of old root -> change their parent address to new address of old root
+		for (int i = 0; i < old_root->m; i++)
+		{
+			if (old_root->ptr_s[i] >= 0)
 			{
 				read_page(9, old_root->ptr_s[i]);
 				buff_pages[9]->parent = old_root_new_addr;
 			}
-			// update old root -> change it's parent to 0
-			// save new root -> at 0
-
-
-			// make new root
-			int parent = -2;
-			unsigned int d = this->d;
-			unsigned int m = 0;
-			int ptr0 = -1;
-			int* ptr_s = new int[2 * this->d];
-			int* addr_s = new int[2 * this->d];
-			int* addr_s_off = new int[2 * this->d];
-			long long* key_s = new long long[2 * this->d];
-
-			for (int i = 0; i < 2 * this->d; i++)
-			{
-				ptr_s[i] = -1;
-				addr_s[i] = -1;
-				addr_s_off[i] = -1;
-				key_s[i] = -1;
-			}
-
-			page* root = new page(this->d, parent, m, ptr0, ptr_s, addr_s, addr_s_off, key_s);
-
-			write_page(root, 0);
-
-			
-			
-
-			// refresh buffered pages?
-
-
-
-			if (!compensate(old_root_new_addr))
-				split(old_root_new_addr, r_key, r_addr, r_addr_off, left_addr, right_addr);
 		}
-	}
-}
+		if (old_root->ptr0 >= 0)
+		{
+			read_page(9, old_root->ptr0);
+			buff_pages[9]->parent = old_root_new_addr;
+		}
 
-void b_tree_manager::split(int cache_ind, long long key, int r_addr, int r_addr_off, int left_addr, int right_addr)
-{
-	//if (cache_ind > 0)
-	//{
-		int m_key, m_addr, m_addr_off, m_index;
-		page* p_split = buff_pages[cache_ind];
-		m_index = p_split->give_median(&m_key, &m_addr, &m_addr_off);
+		// update old root -> change it's parent to 0
+		old_root->parent = 0;
 
-		int parent = p_split->parent;
+		// make new root
+		int parent = -2;
 		unsigned int d = this->d;
 		unsigned int m = 0;
-		int ptr0 = p_split->ptr_s[m_index];
-
+		int ptr0 = -1;
 		int* ptr_s = new int[2 * this->d];
 		int* addr_s = new int[2 * this->d];
 		int* addr_s_off = new int[2 * this->d];
@@ -348,29 +377,74 @@ void b_tree_manager::split(int cache_ind, long long key, int r_addr, int r_addr_
 			key_s[i] = -1;
 		}
 
-		for (int i = m_index + 1, int j=0; i < p_split->m; i++, j++)
-		{
-			m += 1;
-			ptr_s[j] = p_split->ptr_s[i];
-			addr_s[j] = p_split->addr_s[i];
-			addr_s_off[j] = p_split->addr_s_off[i];
-			key_s[j] = p_split->key_s[i];
-		}
+		page* root = new page(this->d, parent, m, ptr0, ptr_s, addr_s, addr_s_off, key_s);
 
-		page* p = new page(this->d, parent, m, ptr0, ptr_s, addr_s, addr_s_off, key_s);
+		// save new root -> at 0
+		write_page(root, 0);
 
-		int saved_page_addr;
-		write_page(p, 0, &saved_page_addr);
+		// refresh buffered pages?
+		root_changed = true;
+		read_page(1, old_root_new_addr);
+		buffed_pages_addrs[0] = -1;
+		read_page(0, 0);
 
-		for (int i = m_index; i < p_split->m; i++)
-		{
-			p_split->ptr_s[i] = -1;
-			p_split->addr_s[i] = -1;
-			p_split->addr_s_off[i] = -1;
-			p_split->key_s[i] = -1;
-		}
-		p_split->m = p_split->m / 2;
-		insert_into(cache_ind - 1, m_key, m_addr, m_addr_off, buffed_pages_addrs[cache_ind], saved_page_addr);
+		if (!compensate(1))
+			split(1, r_key, r_addr, r_addr_off, left_addr, right_addr);
+	}
+}
+
+void b_tree_manager::split(int cache_ind, long long key, int r_addr, int r_addr_off, int left_addr, int right_addr)
+{
+	//if (cache_ind > 0)
+	//{
+	long long m_key;
+	int m_addr, m_addr_off, m_index;
+	page* p_split = buff_pages[cache_ind];
+	m_index = p_split->give_median(&m_key, &m_addr, &m_addr_off);
+
+	int parent = p_split->parent;
+	unsigned int d = this->d;
+	unsigned int m = 0;
+	int ptr0 = p_split->ptr_s[m_index];
+
+	int* ptr_s = new int[2 * this->d];
+	int* addr_s = new int[2 * this->d];
+	int* addr_s_off = new int[2 * this->d];
+	long long* key_s = new long long[2 * this->d];
+
+	for (int i = 0; i < 2 * this->d; i++)
+	{
+		ptr_s[i] = -1;
+		addr_s[i] = -1;
+		addr_s_off[i] = -1;
+		key_s[i] = -1;
+	}
+
+	int j = 0;
+	for (int i = m_index + 1; i < p_split->m; i++)
+	{
+		m += 1;
+		ptr_s[j] = p_split->ptr_s[i];
+		addr_s[j] = p_split->addr_s[i];
+		addr_s_off[j] = p_split->addr_s_off[i];
+		key_s[j] = p_split->key_s[i];
+		j++;
+	}
+
+	page* p = new page(this->d, parent, m, ptr0, ptr_s, addr_s, addr_s_off, key_s);
+
+	int saved_page_addr;
+	write_page(p, file_num_of_pages, &saved_page_addr);
+
+	for (int i = m_index; i < p_split->m; i++)
+	{
+		p_split->ptr_s[i] = -1;
+		p_split->addr_s[i] = -1;
+		p_split->addr_s_off[i] = -1;
+		p_split->key_s[i] = -1;
+	}
+	p_split->m = p_split->m / 2;
+	insert_into(cache_ind - 1, m_key, m_addr, m_addr_off, buffed_pages_addrs[cache_ind], saved_page_addr);
 	//}
 }
 
@@ -434,14 +508,14 @@ void b_tree_manager::print_tree_full(page* p, int p_addr, int depth)
 	if (p->ptr0 >= 0)
 	{
 		read_page(depth + 1, p->ptr0);
-		print_tree(buff_pages[depth + 1], buffed_pages_addrs[depth + 1], depth + 1);
+		print_tree_full(buff_pages[depth + 1], buffed_pages_addrs[depth + 1], depth + 1);
 	}
 	for (int i = 0; i < p->m; i++)
 	{
 		if (p->ptr_s[i] >= 0)
 		{
 			read_page(depth + 1, p->ptr_s[i]);
-			print_tree(buff_pages[depth + 1], buffed_pages_addrs[depth + 1], depth + 1);
+			print_tree_full(buff_pages[depth + 1], buffed_pages_addrs[depth + 1], depth + 1);
 		}
 	}
 }
