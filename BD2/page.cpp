@@ -51,33 +51,105 @@ char* page::to_bytes()
 	return bytes;
 }
 
+void page::print_full(int indent)
+{
+	printf("\n");
+	for (int i = 0; i < indent; i++) printf(" ");
+	printf("|\033[0;37m^%d m:%d ", parent, m);
+	printf("\033[0;33m&%d \033[0m", ptr0);
+	for (int i = 0; i < m; i++) printf("[\033[0;36m%I64d \033[0;32m(%d;%d)\033[0m] \033[0;33m&%d \033[0m", key_s[i], addr_s[i], addr_s_off[i], ptr_s[i]);
+}
+
 void page::print(int indent)
 {
 	printf("\n");
 	for (int i = 0; i < indent; i++) printf(" ");
-	printf("^%d ", parent);
-	for (int i = 0; i < m; i++) printf("%I64d ", key_s[i]);
+	//printf("^%d ", parent);
+	printf("|.");
+	for (int i = 0; i < m; i++) printf("[%I64d].", key_s[i]);
 }
 
-void page::simple_insert(long long key, int addr, int addr_off)
+void page::simple_insert(long long key, int addr, int addr_off, int left_addr, int right_addr)
 {
 	if (m >= 2 * d) return;
-	int index_to_place = 0;
-	for (int i = 0; i < m; i++)						//find index to place
+
+	int j = 0;
+
+	for (int i = 0; i < m; i++)
 	{
-		index_to_place = i;
+		j = i;
 		if (key <= key_s[i]) break;
 	}
-	//if (key_s[index_to_place] < key) index_to_place++;
-	for (int i = m; i > index_to_place; i--)		//shift biggers
+	if (key > key_s[j])		//last
+	{
+		j++;
+	}
+	if (m < 1) j = 0;
+
+	for (int i = m; i > j; i--)		//shift biggers
 	{
 		key_s[i] = key_s[i - 1];
 		ptr_s[i] = ptr_s[i - 1];
 		addr_s[i] = addr_s[i - 1];
 		addr_s_off[i] = addr_s_off[i - 1];
 	}
-	key_s[index_to_place] = key;					//insert new at index
-	addr_s[index_to_place] = addr;
-	addr_s_off[index_to_place] = addr_off;
+
+	if (j == 0)
+	{
+		ptr_s[0] = ptr0;
+		ptr0 = left_addr;
+	}
+	else
+		ptr_s[j-1] = left_addr;
+	ptr_s[j] = right_addr;
+
+	printf("\nsi: %d", j);
+	key_s[j] = key;					//insert new at index
+	addr_s[j] = addr;
+	addr_s_off[j] = addr_off;
+	
 	m++;
+}
+
+int page::left_brother(int addr)
+{
+	int left_ind = -1;
+	int left = -1;
+	for (int i = 0; i < m; i++)
+	{
+		if (addr_s[i] == addr)
+		{
+			left_ind = i-1;
+			break;
+		}
+	}
+	if (left_ind >= 0)
+		left = addr_s[left_ind];
+	return left;
+}
+
+int page::right_brother(int addr)
+{
+	int right_ind = -1;
+	int right = -1;
+	for (int i = 0; i < m; i++)
+	{
+		if (addr_s[i] == addr)
+		{
+			right_ind = i + 1;
+			break;
+		}
+	}
+	if (right_ind < m)
+		right = addr_s[right_ind];
+	return right;
+}
+
+int page::give_median(int* m_key, int* m_addr, int* m_addr_off)
+{
+	int index = m / 2;
+	*m_key = key_s[index];
+	*m_addr = addr_s[index];
+	*m_addr_off = addr_s_off[index];
+	return index;
 }

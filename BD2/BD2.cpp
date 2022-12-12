@@ -39,7 +39,7 @@ int main()
     long long key1 = rand();
     long long key2 = rand();
     //long long key = key1*key2;
-    long long key = 11;
+    long long key = 1;
     for (int i = 0; i < record_length; i++)
     {
         if (i <= rec_rand)
@@ -53,7 +53,7 @@ int main()
     }
     record r = record(key, fields, record_length);
     btm->insert(&r);
-
+    btm->print_tree(true);
 	/*int parent = -1;
 	unsigned int d = thisd;
 	unsigned int m = 2;

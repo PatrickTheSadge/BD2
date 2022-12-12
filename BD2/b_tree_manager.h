@@ -12,32 +12,38 @@ private:
 	int file_num_of_pages;
 	unsigned int d;
 	int page_byte_size;
-	int last_used_addr;
+	int searched_should_be_at_in_page;
+	int searched_should_be_at_addr;
 	int last_depth;
+	bool root_changed = false;
 
-	//page** buff_pages;
+	page** buff_pages;
 	int* buffed_pages_addrs;
 
 	main_file_manager* mfm;
 
-	//void compensation(int addr);
-	//void split(int addr);
+	bool compensate(int cache_ind);
+	void split(int cache_ind, long long key, int r_addr, int r_addr_off, int left_addr, int right_addr);
 	//void merge(int addr);
 	//void get_next_record(????);
 	bool page_cached(int p_ind, int addr);
 	bool search_from(long long key, record* r, int depth, int page_addr);
-public:
-
-	page** buff_pages;
-
 	void read_page(int p_ind, int addr);
+	void write_page(page* p, int addr, int* saved_at);
 	void write_page(page* p, int addr);
+	void print_tree(page* p, int p_addr, int depth);
+	void print_tree_full(page* p, int p_addr, int depth);
+	void insert_into(int cached_ind, long long r_key, int r_addr, int r_addr_off, int left_addr, int right_addr);	//move record to specific page
+public:
 
 	b_tree_manager(const char* file_name, unsigned int d, int* disk_accesses, main_file_manager* mfm);
 	~b_tree_manager();
 	bool search(long long key, record* r);
 	bool insert(record* r);
-	//print_tree();
+	
+	
+	void print_tree(bool full);
+	void print_tree();
 	//delete(long long key);
 	//void read_entire_tree(???);
 };
