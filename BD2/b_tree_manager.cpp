@@ -31,7 +31,7 @@ b_tree_manager::b_tree_manager(const char* file_name, unsigned int d, int* disk_
 		read_page(0, 0);
 	else							//fresh     file / db / no root
 	{
-		int parent = -2;
+		int parent = 0;
 		unsigned int d = this->d;
 		unsigned int m = 0;
 		int ptr0 = -1;
@@ -297,7 +297,7 @@ void b_tree_manager::insert_into(int cached_ind, long long r_key, int r_addr, in
 				old_root->parent = 0;
 
 				// make new root
-				int parent = -2;
+				int parent = 0;
 				unsigned int d = this->d;
 				unsigned int m = 0;
 				int ptr0 = -1;
@@ -320,7 +320,6 @@ void b_tree_manager::insert_into(int cached_ind, long long r_key, int r_addr, in
 				write_page(root, 0);
 
 				// refresh buffered pages?
-				root_changed = true;
 				read_page(1, old_root_new_addr);
 				buffed_pages_addrs[0] = -1;
 				read_page(0, 0);
@@ -360,7 +359,7 @@ void b_tree_manager::insert_into(int cached_ind, long long r_key, int r_addr, in
 		old_root->parent = 0;
 
 		// make new root
-		int parent = -2;
+		int parent = 0;
 		unsigned int d = this->d;
 		unsigned int m = 0;
 		int ptr0 = -1;
@@ -383,13 +382,15 @@ void b_tree_manager::insert_into(int cached_ind, long long r_key, int r_addr, in
 		write_page(root, 0);
 
 		// refresh buffered pages?
-		root_changed = true;
+
 		read_page(1, old_root_new_addr);
 		buffed_pages_addrs[0] = -1;
 		read_page(0, 0);
 
 		if (!compensate(1))
 			split(1, r_key, r_addr, r_addr_off, left_addr, right_addr);
+
+		//
 	}
 }
 
@@ -401,6 +402,7 @@ void b_tree_manager::split(int cache_ind, long long key, int r_addr, int r_addr_
 	int m_addr, m_addr_off, m_index;
 	page* p_split = buff_pages[cache_ind];
 	m_index = p_split->give_median(&m_key, &m_addr, &m_addr_off);
+
 
 	int parent = p_split->parent;
 	unsigned int d = this->d;
@@ -445,6 +447,10 @@ void b_tree_manager::split(int cache_ind, long long key, int r_addr, int r_addr_
 	}
 	p_split->m = p_split->m / 2;
 	insert_into(cache_ind - 1, m_key, m_addr, m_addr_off, buffed_pages_addrs[cache_ind], saved_page_addr);
+	if (cache_ind == 0)
+	{
+
+	}
 	//}
 }
 

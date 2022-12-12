@@ -55,7 +55,8 @@ void page::print_full(int indent)
 {
 	printf("\n");
 	for (int i = 0; i < indent; i++) printf(" ");
-	printf("|\033[0;37m^%d m:%d ", parent, m);
+	//printf("|\033[0;37m^%d m:%d ", parent, m);
+	printf("|\033[0;37mm:%d ", m);
 	printf("\033[0;33m&%d \033[0m", ptr0);
 	for (int i = 0; i < m; i++) printf("[\033[0;36m%I64d \033[0;32m(%d;%d)\033[0m] \033[0;33m&%d \033[0m", key_s[i], addr_s[i], addr_s_off[i], ptr_s[i]);
 }

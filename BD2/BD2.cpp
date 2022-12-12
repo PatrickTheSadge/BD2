@@ -30,8 +30,8 @@ int main()
 	
     auto now = std::chrono::high_resolution_clock::now();
     auto timeMillis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-    //srand(timeMillis);
-    srand(time(NULL));
+    srand(timeMillis);
+    //srand(time(NULL));
 
     int record_length = 10;
     int* fields = new int[record_length];
@@ -40,7 +40,7 @@ int main()
     long long key2 = rand();
     //long long key = key1*key2;
 
-    long long key = rand() % 1000;
+    long long key = rand() % 10000;
     printf("%lld\n", key);
     for (int i = 0; i < record_length; i++)
     {
@@ -54,10 +54,10 @@ int main()
         }
     }
     record r = record(key, fields, record_length);
-    //btm->insert(&r);
-    //btm->print_tree(true);
-
+    btm->insert(&r);
     btm->print_tree(true);
+
+    //btm->print_tree();
 	/*int parent = -1;
 	unsigned int d = thisd;
 	unsigned int m = 2;
