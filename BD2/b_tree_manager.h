@@ -34,6 +34,7 @@ private:
 	void print_tree(page* p, int p_addr, int depth);
 	void print_tree_full(page* p, int p_addr, int depth);
 	void insert_into(int cached_ind, long long r_key, int r_addr, int r_addr_off, int left_addr, int right_addr);	//move record to specific page
+	void print_records_ordered(page* p, int p_addr, int depth, record* r);
 public:
 
 	b_tree_manager(const char* file_name, unsigned int d, int* disk_accesses, main_file_manager* mfm);
@@ -41,9 +42,10 @@ public:
 	bool search(long long key, record* r);
 	bool insert(record* r);
 	
+	void print_records_ordered(record* record_template);
 	
 	void print_tree(bool full);
 	void print_tree();
-	//delete(long long key);
-	//void read_entire_tree(???);
+	int remove(long long key, record* record_template, bool remove_from_main_file);
+	//bool update();
 };

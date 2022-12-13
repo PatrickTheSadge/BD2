@@ -29,10 +29,10 @@ page::page(unsigned int d, int parent, unsigned int m, int ptr0, int* ptr_s, int
 
 page::~page()
 {
-	delete ptr_s;
-	delete addr_s;
-	delete addr_s_off;
-	delete key_s;
+	delete[] ptr_s;
+	delete[] addr_s;
+	delete[] addr_s_off;
+	delete[] key_s;
 }
 
 char* page::to_bytes()
@@ -104,12 +104,45 @@ void page::simple_insert(long long key, int addr, int addr_off, int left_addr, i
 		ptr_s[j-1] = left_addr;
 	ptr_s[j] = right_addr;
 
-	printf("\nsi: %d", j);
 	key_s[j] = key;					//insert new at index
 	addr_s[j] = addr;
 	addr_s_off[j] = addr_off;
 	
 	m++;
+}
+
+void page::simple_remove(long long key, int* rem_addr, int* rem_off)
+{
+	if (m < 1) return;
+	int index = 0;
+	for (int i = 0; i < m; i++)
+	{
+		if (key == key_s[i])
+		{
+			index = i;
+			break;
+		}
+	}
+	*rem_off = addr_s_off[index];
+	*rem_addr = addr_s[index];
+	for (int i = index; i < m-1; i++)
+	{
+		key_s[i] = key_s[i + 1];
+		addr_s[i] = addr_s[i + 1];
+		addr_s_off[i] = addr_s_off[i + 1];
+		ptr_s[i] = ptr_s[i + 1];
+	}
+	m--;
+}
+
+bool page::is_leaf()
+{
+	if (ptr0 >= 0) return false;
+	for (int i = 0; i < m; i++)
+	{
+		if (ptr_s[i] >= 0) return false;
+	}
+	return true;
 }
 
 int page::left_brother(int addr)
@@ -146,6 +179,42 @@ int page::right_brother(int addr)
 	return right;
 }
 
+int page::left_brother_by_key(long long key)
+{
+	int left_ind = -2;
+	int left = -1;
+	for (int i = 0; i < m; i++)
+	{
+		if (key_s[i] == key)
+		{
+			left_ind = i - 1;
+			break;
+		}
+	}
+	if (left_ind >= 0)
+		left = ptr_s[left_ind];
+	else if (left_ind == -1)
+		left = ptr0;
+	return left;
+}
+
+int page::right_brother_by_key(long long key)
+{
+	int right_ind = -2;
+	int right = -1;
+	for (int i = 0; i < m; i++)
+	{
+		if (key_s[i] == key)
+		{
+			right_ind = i;
+			break;
+		}
+	}
+	if (right_ind < m)
+		right = ptr_s[right_ind];
+	return right;
+}
+
 int page::give_median(long long* m_key, int* m_addr, int* m_addr_off)
 {
 	int index = m / 2;
@@ -153,4 +222,41 @@ int page::give_median(long long* m_key, int* m_addr, int* m_addr_off)
 	*m_addr = addr_s[index];
 	*m_addr_off = addr_s_off[index];
 	return index;
+}
+
+long long page::biggest_key(int* addr, int* off)
+{
+	if (m > 0)
+	{
+		*addr = addr_s[m - 1];
+		*off = addr_s_off[m - 1];
+		return key_s[m - 1];
+	}
+	else return -1;
+}
+
+long long page::smallest_key(int* addr, int* off)
+{
+	if (m > 0)
+	{
+		*addr = addr_s[0];
+		*off = addr_s_off[0];
+		return key_s[0];
+	}
+	else return -1;
+}
+
+void page::address_of_key(long long key, int* addr, int* offset)
+{
+	for (int i = 0; i < m; i++)
+	{
+		if (key == key_s[i])
+		{
+			*addr = addr_s[i];
+			*offset = addr_s_off[i];
+			return;
+		}
+	}
+	*addr = -1;
+	*offset = -1;
 }

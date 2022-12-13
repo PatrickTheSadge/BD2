@@ -22,7 +22,14 @@ public:
 	void print_full(int indent);
 	void print(int indent);
 	void simple_insert(long long key, int addr, int addr_off, int left_addr, int right_addr);
-	int left_brother(int addr);
-	int right_brother(int addr);
+	void simple_remove(long long key, int* rem_addr, int* rem_off);
+	int left_brother(int addr);			//returns addr
+	int left_brother_by_key(long long key);	//returns addr
+	int right_brother_by_key(long long key);	//returns addr
+	int right_brother(int addr);		//returns addr
 	int give_median(long long* m_key, int* m_addr, int* m_addr_off);
+	bool is_leaf();
+	long long biggest_key(int* addr, int* off);
+	long long smallest_key(int* addr, int* off);
+	void address_of_key(long long key, int* addr, int* offset);
 };

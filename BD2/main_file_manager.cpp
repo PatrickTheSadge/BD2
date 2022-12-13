@@ -30,6 +30,7 @@ main_file_manager::~main_file_manager()
 
 void main_file_manager::read_block_from_file(int block_addr)
 {
+	if (block_addr == block_cached_addr) return;
 	std::fstream file(this->file_name, std::ios::binary | std::ios::in);
 	file.seekg(block_addr * block_size);
 	file.read(block, block_size);
@@ -90,6 +91,14 @@ bool main_file_manager::read(record* r, int block_addr, int record_pos_in_block)
 	return true;
 }
 
+void main_file_manager::remove_record(record* r, int block_addr, int record_pos_in_block)
+{
+	//just changes bit of existance of the record to 0
+	read_block_from_file(block_addr);
+	int record_offset = record_pos_in_block * r->byte_size;
+	block[record_offset + sizeof(long long)] = block[record_offset + sizeof(long long)] & 0b11111110;
+}
+
 void main_file_manager::write(record* r, int* addr_writen, int* off_writen)
 {
 	if (file_num_of_blocks == 0)
@@ -119,6 +128,7 @@ void main_file_manager::write(record* r, int* addr_writen, int* off_writen)
 		last_r_index++;
 		read(tmp_r, file_num_of_blocks - 1, last_r_index);
 	}
+	delete tmp_r;
 
 	char last_r_flags_byte = block[last_r_index * r->byte_size + sizeof(long long)];
 	last_r_flags_byte = last_r_flags_byte & 0b11111101;				//last is not last anymore
@@ -156,4 +166,27 @@ void main_file_manager::write_at(record* r, int block_addr, int record_pos_in_bl
 	std::memcpy(&(r->flags), &(block[record_offset + sizeof(long long)]), sizeof(char));
 	std::memcpy((void*)flds, &(block[record_offset + sizeof(long long) + sizeof(char)]), (r->size) * sizeof(int));
 	r->fields = flds;*/
+}
+
+void main_file_manager::print_main_file(const record* record_template)
+{
+	printf("\n========= MAIN FILE:\n");
+	printf("(block, offset) | KEY | FLAGS | FIELDS\n");
+	for (int i = 0; i < file_num_of_blocks; i++)
+	{
+		for (int j = 0; j < int(block_size/record_template->byte_size); j++)
+		{
+			record* r = new record(0, nullptr, record_template->size);
+			read(r, i, j);
+			printf(" \033[0;32m(%d, %d)\033[0m: ", i, j);
+			r->print(true);
+			printf("\n");
+			if (r->last())
+			{
+				delete r;
+				break;
+			}
+			delete r;
+		}
+	}
 }

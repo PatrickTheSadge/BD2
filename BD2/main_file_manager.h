@@ -21,7 +21,9 @@ public:
 	main_file_manager(const char* file_name, int block_size, int* disk_accesses);
 	~main_file_manager();
 	bool read(record* r, int block_addr, int record_pos_in_block);
+	void remove_record(record* r, int block_addr, int record_pos_in_block);
 	void write(record* r, int* addr_writen, int* off_writen);
 	void write_at(record* r, int block_addr, int record_pos_in_block);
+	void print_main_file(const record* record_template);
 };
 

@@ -63,10 +63,10 @@ b_tree_manager::~b_tree_manager()
 		if (this->buff_pages[i] != nullptr)
 		{
 			write_page(this->buff_pages[i], buffed_pages_addrs[i]);
-			delete this->buff_pages[i];
+			//delete this->buff_pages[i];
 		}
 
-	delete buff_pages;
+	delete[] buff_pages;
 	delete[] buffed_pages_addrs;
 }
 
@@ -118,11 +118,13 @@ void b_tree_manager::read_page(int p_ind, int addr)
 	delete buff_pages[p_ind];
 	buff_pages[p_ind] = p;
 	buffed_pages_addrs[p_ind] = addr;
+	delete buff;
 }
 
 void b_tree_manager::write_page(page* p, int addr, int* saved_at)
 {
 	if (addr < 0) return;
+	if (p == nullptr) return;
 	char* bytes = p->to_bytes();
 	if (addr < file_num_of_pages)
 	{
@@ -228,7 +230,9 @@ bool b_tree_manager::search(long long key, record* r)
 
 bool b_tree_manager::insert(record* r)
 {
-	if (search(r->key, r)) return false;
+	record* tmp_r = new record(69420, nullptr, r->size);
+	if (search(r->key, tmp_r)) return false;
+	delete tmp_r;
 	
 	int p_ind = last_depth;
 	int addr = searched_should_be_at_addr;
@@ -247,7 +251,9 @@ bool b_tree_manager::insert(record* r)
 	{
 		if (!compensate(p_ind))
 			split(p_ind, r->key, w_addr, w_offset, -1, -1);
+
 		insert(r);
+		//pg->simple_insert(r->key, w_addr, w_offset, -1, -1);
 	}
 
 	return true;
@@ -283,14 +289,14 @@ void b_tree_manager::insert_into(int cached_ind, long long r_key, int r_addr, in
 				{
 					if (old_root->ptr_s[i] >= 0)
 					{
-						read_page(9, old_root->ptr_s[i]);
-						buff_pages[9]->parent = old_root_new_addr;
+						read_page(cached_ind+1, old_root->ptr_s[i]);
+						buff_pages[cached_ind+1]->parent = old_root_new_addr;
 					}
 				}
 				if (old_root->ptr0 >= 0)
 				{
-					read_page(9, old_root->ptr0);
-					buff_pages[9]->parent = old_root_new_addr;
+					read_page(cached_ind + 1, old_root->ptr0);
+					buff_pages[cached_ind + 1]->parent = old_root_new_addr;
 				}
 
 				// update old root -> change it's parent to 0
@@ -345,14 +351,14 @@ void b_tree_manager::insert_into(int cached_ind, long long r_key, int r_addr, in
 		{
 			if (old_root->ptr_s[i] >= 0)
 			{
-				read_page(9, old_root->ptr_s[i]);
-				buff_pages[9]->parent = old_root_new_addr;
+				read_page(cached_ind + 1, old_root->ptr_s[i]);
+				buff_pages[cached_ind + 1]->parent = old_root_new_addr;
 			}
 		}
 		if (old_root->ptr0 >= 0)
 		{
-			read_page(9, old_root->ptr0);
-			buff_pages[9]->parent = old_root_new_addr;
+			read_page(cached_ind + 1, old_root->ptr0);
+			buff_pages[cached_ind + 1]->parent = old_root_new_addr;
 		}
 
 		// update old root -> change it's parent to 0
@@ -387,9 +393,9 @@ void b_tree_manager::insert_into(int cached_ind, long long r_key, int r_addr, in
 		buffed_pages_addrs[0] = -1;
 		read_page(0, 0);
 
-		if (!compensate(1))
-			split(1, r_key, r_addr, r_addr_off, left_addr, right_addr);
-
+		//if (!compensate(1))
+			//split(1, r_key, r_addr, r_addr_off, left_addr, right_addr);
+		insert_into(0, r_key, r_addr, r_addr_off, old_root_new_addr, right_addr);
 		//
 	}
 }
@@ -447,10 +453,6 @@ void b_tree_manager::split(int cache_ind, long long key, int r_addr, int r_addr_
 	}
 	p_split->m = p_split->m / 2;
 	insert_into(cache_ind - 1, m_key, m_addr, m_addr_off, buffed_pages_addrs[cache_ind], saved_page_addr);
-	if (cache_ind == 0)
-	{
-
-	}
 	//}
 }
 
@@ -489,7 +491,7 @@ bool b_tree_manager::compensate(int cache_ind)
 void b_tree_manager::print_tree(page* p, int p_addr, int depth)
 {
 	if (!page_cached(depth, p_addr)) read_page(depth, p_addr);
-	p->print(depth);
+	p->print(depth*3);
 
 	if (p->ptr0 >= 0)
 	{
@@ -509,7 +511,7 @@ void b_tree_manager::print_tree(page* p, int p_addr, int depth)
 void b_tree_manager::print_tree_full(page* p, int p_addr, int depth)
 {
 	if (!page_cached(depth, p_addr)) read_page(depth, p_addr);
-	p->print_full(depth);
+	p->print_full(depth*3);
 
 	if (p->ptr0 >= 0)
 	{
@@ -537,4 +539,211 @@ void b_tree_manager::print_tree(bool full)
 		print_tree_full(buff_pages[0], buffed_pages_addrs[0], 0);
 	else
 		print_tree(buff_pages[0], buffed_pages_addrs[0], 0);
+}
+
+void b_tree_manager::print_records_ordered(page* p, int p_addr, int depth, record* r)
+{
+	if (p->ptr0 >= 0)
+	{
+		read_page(depth + 1, p->ptr0);
+		print_records_ordered(buff_pages[depth + 1], buffed_pages_addrs[depth + 1], depth + 1, r);
+	}
+
+	read_page(depth, p_addr);
+
+	for (int i = 0; i < p->m; i++)
+	{
+		record tmp_r = record(0, nullptr, r->size);
+		mfm->read(&tmp_r, p->addr_s[i], p->addr_s_off[i]);
+		printf("\033[0;32m(%d, %d) \033[0m", p->addr_s[i], p->addr_s_off[i]);
+		tmp_r.print(true);
+		printf("\n");
+		if (p->ptr_s[i] >= 0)
+		{
+			read_page(depth + 1, p->ptr_s[i]);
+			print_records_ordered(buff_pages[depth + 1], buffed_pages_addrs[depth + 1], depth + 1, r);
+		}
+	}
+}
+
+void b_tree_manager::print_records_ordered(record* record_template)
+{
+	read_page(0, 0);
+	print_records_ordered(buff_pages[0], buffed_pages_addrs[0], 0, record_template);
+}
+
+int b_tree_manager::remove(long long key, record* record_template, bool remove_from_main_file)
+{	
+	// return 1  - success, record removed
+	// return 0  - record not found
+	// reutrn -1 - failure, could not remove record, merge not implemented yet
+
+	record* tmp_r = new record(69420, nullptr, record_template->size);
+	if (!search(key, tmp_r)) return 0;
+	delete tmp_r;
+
+	int p_ind = last_depth;
+	int addr = searched_should_be_at_addr;
+
+	read_page(p_ind, addr);
+
+	page* pg = buff_pages[p_ind];
+
+	int rem_off;
+	int rem_addr;
+	pg->address_of_key(key, &rem_addr, &rem_off);
+
+	if (remove_from_main_file)
+		mfm->remove_record(record_template, rem_addr, rem_off);
+
+	if (pg->m > d || p_ind == 0)
+	{
+		if (pg->is_leaf())
+		{
+			pg->simple_remove(key, &rem_addr, &rem_off);
+		}
+		else
+		{
+			int this_addr = buffed_pages_addrs[last_depth];
+
+			int left_child_addr = buff_pages[p_ind]->left_brother_by_key(key);
+			int right_child_addr = buff_pages[p_ind]->right_brother_by_key(key);
+
+			bool done = false;
+			if (left_child_addr >= 0)
+			{
+				read_page(last_depth+1, left_child_addr);
+				if ((buff_pages[last_depth + 1]->m) > d)
+				{
+					done = true;
+					int child_key_addr, child_key_off;
+					int child_key = buff_pages[last_depth + 1]->biggest_key(&child_key_addr, &child_key_off);
+					if (child_key >= 0)
+					{
+						remove(child_key, record_template, false);
+						int index = 0;
+						for (int i = 0; i < pg->m; i++)
+						{
+							if (key == pg->key_s[i])
+							{
+								index = i;
+								break;
+							}
+						}
+						pg->key_s[index] = child_key;
+						pg->addr_s[index] = child_key_addr;
+						pg->addr_s_off[index] = child_key_off;
+					}
+				}
+				write_page(buff_pages[last_depth + 1], left_child_addr);
+			}
+			
+			if (!done && right_child_addr >= 0)
+			{
+				read_page(last_depth + 1, right_child_addr);
+				if ((buff_pages[last_depth + 1]->m) > d)
+				{
+					done = true;
+					int child_key_addr, child_key_off;
+					int child_key = buff_pages[last_depth + 1]->smallest_key(&child_key_addr, &child_key_off);
+					if (child_key >= 0)
+					{
+						remove(child_key, record_template, false);
+						int index = 0;
+						for (int i = 0; i < pg->m; i++)
+						{
+							if (key == pg->key_s[i])
+							{
+								index = i;
+								break;
+							}
+						}
+						pg->key_s[index] = child_key;
+						pg->addr_s[index] = child_key_addr;
+						pg->addr_s_off[index] = child_key_off;
+					}
+				}
+				write_page(buff_pages[last_depth + 1], right_child_addr);
+			}
+
+			if(!done)
+			{
+				//merge
+				return -1;
+			}
+			return 1;
+		}
+	}
+	else
+	{
+		int this_addr = buffed_pages_addrs[last_depth];
+
+		int left_child_addr = buff_pages[p_ind]->left_brother_by_key(key);
+		int right_child_addr = buff_pages[p_ind]->right_brother_by_key(key);
+		bool done = false;
+
+		if (left_child_addr >= 0)
+		{
+			read_page(last_depth + 1, left_child_addr);
+			if ((buff_pages[last_depth + 1]->m) > d)
+			{
+				done = true;
+				int child_key_addr, child_key_off;
+				int child_key = buff_pages[last_depth + 1]->biggest_key(&child_key_addr, &child_key_off);
+				if (child_key >= 0)
+				{
+					remove(child_key, record_template, false);
+					int index = 0;
+					for (int i = 0; i < pg->m; i++)
+					{
+						if (key == pg->key_s[i])
+						{
+							index = i;
+							break;
+						}
+					}
+					pg->key_s[index] = child_key;
+					pg->addr_s[index] = child_key_addr;
+					pg->addr_s_off[index] = child_key_off;
+				}
+			}
+			write_page(buff_pages[last_depth + 1], left_child_addr);
+		}
+		
+		if (done && right_child_addr >= 0)
+		{
+			read_page(last_depth + 1, right_child_addr);
+			if ((buff_pages[last_depth + 1]->m) > d)
+			{
+				done = true;
+				int child_key_addr, child_key_off;
+				int child_key = buff_pages[last_depth + 1]->smallest_key(&child_key_addr, &child_key_off);
+				if (child_key >= 0)
+				{
+					remove(child_key, record_template, false);
+					int index = 0;
+					for (int i = 0; i < pg->m; i++)
+					{
+						if (key == pg->key_s[i])
+						{
+							index = i;
+							break;
+						}
+					}
+					pg->key_s[index] = child_key;
+					pg->addr_s[index] = child_key_addr;
+					pg->addr_s_off[index] = child_key_off;
+				}
+			}
+			write_page(buff_pages[last_depth + 1], right_child_addr);
+		}
+
+		if (!done)
+		{
+			//merge
+			return -1;
+		}
+		return 1;
+	}
+	return 1;
 }
