@@ -23,7 +23,7 @@ page::page(unsigned int d, int parent, unsigned int m, int ptr0, int* ptr_s, int
 	this->addr_s = addr_s;
 	this->addr_s_off = addr_s_off;
 	this->key_s = key_s;
-	this->byte_size = sizeof(int)*4 + sizeof(int)*2*d*3 + sizeof(long long)*2*d;
+	this->byte_size = sizeof(int)*4 + sizeof(int)*4*d*3 + sizeof(long long)*4*d;
 	//this->byte_size = sizeof(page);
 }
 
@@ -41,13 +41,13 @@ char* page::to_bytes()
 	int offset = 0;
 	std::memcpy((void*)(bytes + offset), this, sizeof(int)*4);
 	offset += sizeof(int)*4;
-	std::memcpy((void*)(bytes + offset), ptr_s, sizeof(int)*2*d);
-	offset += sizeof(int)*2*d;
-	std::memcpy((void*)(bytes + offset), addr_s, sizeof(int)*2*d);
-	offset += sizeof(int) * 2 * d;
-	std::memcpy((void*)(bytes + offset), addr_s_off, sizeof(int) * 2 * d);
-	offset += sizeof(int) * 2 * d;
-	std::memcpy((void*)(bytes + offset), key_s, sizeof(long long) * 2 * d);
+	std::memcpy((void*)(bytes + offset), ptr_s, sizeof(int)*4*d);
+	offset += sizeof(int)*4*d;
+	std::memcpy((void*)(bytes + offset), addr_s, sizeof(int)*4*d);
+	offset += sizeof(int) * 4 * d;
+	std::memcpy((void*)(bytes + offset), addr_s_off, sizeof(int) * 4 * d);
+	offset += sizeof(int) * 4 * d;
+	std::memcpy((void*)(bytes + offset), key_s, sizeof(long long) * 4 * d);
 	return bytes;
 }
 
@@ -145,20 +145,26 @@ bool page::is_leaf()
 	return true;
 }
 
-int page::left_brother(int addr)
+int page::left_brother(int addr) // page_addr
 {
-	int left_ind = -1;
+	int left_ind = -2;
 	int left = -1;
+	if (ptr0 == addr)
+	{
+		return -1;
+	}
 	for (int i = 0; i < m; i++)
 	{
-		if (addr_s[i] == addr)
+		if (ptr_s[i] == addr)
 		{
 			left_ind = i-1;
 			break;
 		}
 	}
 	if (left_ind >= 0)
-		left = addr_s[left_ind];
+		return ptr_s[left_ind];
+	if (left_ind == -1)
+		return ptr0;
 	return left;
 }
 
@@ -166,16 +172,18 @@ int page::right_brother(int addr)
 {
 	int right_ind = -1;
 	int right = -1;
+	if (ptr0 == addr)
+		return ptr_s[0];
 	for (int i = 0; i < m; i++)
 	{
-		if (addr_s[i] == addr)
+		if (ptr_s[i] == addr)
 		{
-			right_ind = i + 1;
+			right_ind = i+1;
 			break;
 		}
 	}
 	if (right_ind < m)
-		right = addr_s[right_ind];
+		return ptr_s[right_ind];
 	return right;
 }
 
@@ -259,4 +267,23 @@ void page::address_of_key(long long key, int* addr, int* offset)
 	}
 	*addr = -1;
 	*offset = -1;
+}
+
+int page::right_index_of_addr(int addr)
+{
+	if (ptr0 == addr) return 0;
+	for (int i = 0; i < m; i++)
+		if (ptr_s[i] == addr)
+			if (i + 1 < m)
+				return i + 1;
+	return -1;
+}
+
+int page::left_index_of_addr(int addr)
+{
+	if (ptr0 == addr) return -1;
+	for (int i = 0; i < m; i++)
+		if (ptr_s[i] == addr)
+			return i;
+	return -1;
 }

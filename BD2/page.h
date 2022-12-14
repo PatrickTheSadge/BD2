@@ -32,4 +32,6 @@ public:
 	long long biggest_key(int* addr, int* off);
 	long long smallest_key(int* addr, int* off);
 	void address_of_key(long long key, int* addr, int* offset);
+	int right_index_of_addr(int addr);
+	int left_index_of_addr(int addr);
 };

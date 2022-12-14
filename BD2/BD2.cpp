@@ -9,6 +9,7 @@
 struct options
 {
     bool help = false;
+    bool debug = false;
     char main_file_name[128] = "main_f.bin";
     char index_file_name[128] = "index_f.bin";
     int record_length = 15;
@@ -27,6 +28,7 @@ int main(int argc, char** argv)
     {
         printf("Possible arguments:\n");
         printf("\t-h => help\n");
+        printf("\t-d => debug (print disk operations)                                  defualt=%d\n", opts.debug);
         printf("\t-mf <string> => main file name                                       default=%s (max_str_len=127)\n", opts.main_file_name);
         printf("\t-if <string> => index file name                                      default=%s (max_str_len=127)\n", opts.index_file_name);
         printf("\t-l <int> =>  max number of fields in record,                         default=%d (integers)\n", opts.record_length);
@@ -53,6 +55,8 @@ int main(int argc, char** argv)
     char* command = new char[256];
     while (true)
     {
+        int mfm_disk = mfm_disk_accesses;
+        int btm_disk = btm_disk_accesses;
         printf("\n\033[0;36mcommand: \033[0m");
         scanf("%s", command);
 
@@ -213,7 +217,7 @@ int main(int argc, char** argv)
         }
         else if (std::strcmp(command, "reorganise") == 0 || std::strcmp(command, "r") == 0)
         {
-            // TODO TODO TODO TODO TODO TODO 
+            printf("\n\033[0;35mReorganization is not critical for b_tree structure, by reorganisation only disk space would be gained\033[0m\n");
         }
         else if (std::strcmp(command, "exit") == 0 || std::strcmp(command, "e") == 0)
         {
@@ -224,6 +228,7 @@ int main(int argc, char** argv)
         }
         else
             printf("Invalid command, try help");
+            printf("\nOperation took: %d / %d  index / main  file disk accesses", btm_disk_accesses - btm_disk, mfm_disk_accesses - mfm_disk);
     }
     
     delete command;
@@ -243,6 +248,9 @@ void parse_options(int argc, char** argv, options* opts)
         {
             if (std::strcmp(argv[i], "-h") == 0)
                 opts->help = true;
+
+            else if (std::strcmp(argv[i], "-d") == 0)
+                opts->debug = true;
 
             else if (std::strcmp(argv[i], "-mf") == 0)
                 std::strcpy(opts->main_file_name, argv[i + 1]);

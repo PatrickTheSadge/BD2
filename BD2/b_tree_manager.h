@@ -24,8 +24,7 @@ private:
 
 	bool compensate(int cache_ind);
 	void split(int cache_ind, long long key, int r_addr, int r_addr_off, int left_addr, int right_addr);
-	//void merge(int addr);
-	//void get_next_record(????);
+	void merge(int cache_ind, int left_chld, int right_chld);
 	bool page_cached(int p_ind, int addr);
 	bool search_from(long long key, record* r, int depth, int page_addr);
 	void read_page(int p_ind, int addr);
@@ -35,6 +34,7 @@ private:
 	void print_tree_full(page* p, int p_addr, int depth);
 	void insert_into(int cached_ind, long long r_key, int r_addr, int r_addr_off, int left_addr, int right_addr);	//move record to specific page
 	void print_records_ordered(page* p, int p_addr, int depth, record* r);
+	void reload_page(int addr);
 public:
 
 	b_tree_manager(const char* file_name, unsigned int d, int* disk_accesses, main_file_manager* mfm);
