@@ -228,6 +228,8 @@ int main(int argc, char** argv)
         }
         else
             printf("Invalid command, try help");
+
+        if (opts.debug)
             printf("\nOperation took: %d / %d  index / main  file disk accesses", btm_disk_accesses - btm_disk, mfm_disk_accesses - mfm_disk);
     }
     
