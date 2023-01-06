@@ -256,7 +256,7 @@ bool b_tree_manager::insert(record* r)
 		insert(r);
 		//pg->simple_insert(r->key, w_addr, w_offset, -1, -1);
 	}
-	compensate(p_ind);
+	//compensate(p_ind);
 
 	return true;
 }

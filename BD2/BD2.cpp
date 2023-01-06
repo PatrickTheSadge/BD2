@@ -14,7 +14,7 @@ struct options
     char index_file_name[128] = "index_f.bin";
     int record_length = 15;
     int block_size = 250;
-    int d = 5;
+    int dd = 5;
 };
 
 void parse_options(int argc, char** argv, options* opts);
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
         printf("\t-if <string> => index file name                                      default=%s (max_str_len=127)\n", opts.index_file_name);
         printf("\t-l <int> =>  max number of fields in record,                         default=%d (integers)\n", opts.record_length);
         printf("\t-b <int> =>  block size in bytes in file (simulated disk behaviour), default=%d\n", opts.block_size);
-        printf("\t-d <int> =>  d -> min (d) / max (2*d) keys per index page,           default=%d\n", opts.d);
+        printf("\t-dd <int> =>  d -> min (d) / max (2*d) keys per index page,           default=%d\n", opts.dd);
         return 0;
     }
 
@@ -41,12 +41,12 @@ int main(int argc, char** argv)
     printf("index_file_name:\t%s\n", opts.index_file_name);
     printf("block_size:     \t%d bytes\n", opts.block_size);
     printf("record_length:  \t%d integers\n", opts.record_length);
-    printf("d:              \t%d\n", opts.d);
+    printf("d:              \t%d\n", opts.dd);
 
     int mfm_disk_accesses = 0;
     int btm_disk_accesses = 0;
     main_file_manager* mfm = new main_file_manager(opts.main_file_name, opts.block_size, &mfm_disk_accesses);
-    b_tree_manager* btm = new b_tree_manager(opts.index_file_name, opts.d, &btm_disk_accesses, mfm);
+    b_tree_manager* btm = new b_tree_manager(opts.index_file_name, opts.dd, &btm_disk_accesses, mfm);
 
     auto now = std::chrono::high_resolution_clock::now();
     auto timeMillis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
@@ -266,8 +266,8 @@ void parse_options(int argc, char** argv, options* opts)
             else if (std::strcmp(argv[i], "-b") == 0)
                 opts->block_size = std::atoi(argv[i + 1]);
 
-            else if (std::strcmp(argv[i], "-d") == 0)
-                opts->d = std::atoi(argv[i + 1]);
+            else if (std::strcmp(argv[i], "-dd") == 0)
+                opts->dd = std::atoi(argv[i + 1]);
 
         }
     }
